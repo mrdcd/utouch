@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="utouch:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="utouch.war">
+      <element id="artifact" artifact-name="utouch:war exploded" />
+    </root>
+  </artifact>
+</component>

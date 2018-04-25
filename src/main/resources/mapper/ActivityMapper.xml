@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utouch.dao.ActivityDao">
+    <!--感兴趣-->
+    <update id="interesting" parameterType="Integer">
+        UPDATE activity_info SET interested_num=interested_num+1 WHERE id=#{id}
+    </update>
+
+    <!--取消感兴趣-->
+    <update id="interestCanceling" parameterType="Integer">
+        UPDATE activity_info SET interested_num=interested_num-1 WHERE id=#{id}
+    </update>
+
+    <!--分享-->
+    <update id="sharing" parameterType="Integer">
+        UPDATE activity_info SET shared_num=shared_num+1 WHERE id=#{id}
+    </update>
+
+    <!--举报-->
+    <update id="reporting" parameterType="Integer">
+        UPDATE activity_info SET  reported_num=reported_num+1 WHERE id=#{id}
+    </update>
+
+    <!--查看举报数-->
+    <select id="selectReportedNum" resultType="Integer" parameterType="Integer">
+        SELECT reported_num FROM activity_info WHERE id=#{id}
+    </select>
+
+    <!--删除举报数达到上限或过期的活动-->
+   <!-- <delete id="deleteActivity" parameterType="Integer">
+        DELETE FROM activity_info WHERE id=#{id}
+    </delete>-->
+
+    <!--根据活动id选择活动详情-->
+    <select id="selectActivityInfo" resultType="ActivityWithUserInfo" parameterType="Integer">
+        SELECT nickname,profile,avatar,
+        activity_info.id id,activity_info.announcer_id,activity_name,activity_label,activity_intro,activity_time,
+        activity_place,activity_video,activity_audio,activity_picture,interested_num,shared_num
+        FROM user_info,activity_info
+        WHERE user_info.id=activity_info.announcer_id
+        AND activity_info.id=#{id}
+    </select>
+
+
+    <!--选择所有未过时的活动,待考证-->
+    <select id="selectActivities" resultType="ActivityWithUserInfo" parameterType="ActivitySelector">
+        SELECT nickname,profile,avatar,
+        activity_info.id id,activity_info.announcer_id,activity_name,activity_label,activity_intro,activity_time,
+        activity_place,activity_video,activity_audio,activity_picture,interested_num,shared_num
+        FROM activity_info,user_info
+        WHERE user_info.id=activity_info.announcer_id
+        AND reported_num &lt;= 9
+        AND activity_time > (SELECT date_format(now(),'%Y-%m-%d %H:%I'))
+        ORDER BY activity_time
+        LIMIT #{start},#{num}
+    </select>
+
+    <!--根据筛选条件选择对应的活动-->
+    <select id="selectProperActivities" resultType="Activity" parameterType="ActivitySelector">
+        SELECT nickname,profile,avatar,
+        activity_info.id id,activity_info.announcer_id,activity_name,activity_label,activity_intro,activity_time,
+        activity_place,activity_video,activity_audio,activity_picture,interested_num,shared_num
+        FROM activity_info,user_info
+        WHERE user_info.id=activity_info.announcer_id
+        AND reported_num &lt;= 9
+        AND  activity_time > (SELECT date_format(now(),'%Y-%m-%d %H:%I'))
+        AND  (nickname LIKE '%' #{info} '%'
+        OR activity_name LIKE '%' #{info} '%'
+        OR activity_place LIKE '%' #{info} '%'
+        OR activity_label LIKE '%' #{info} '%')
+        ORDER BY activity_time
+        LIMIT #{start},#{num}
+    </select>
+
+    <!--插入活动记录（发布活动）-->
+    <insert id="insertActivity" parameterType="Activity">
+        INSERT INTO activity_info(
+        announcer_id,activity_name,activity_intro,activity_label,
+        activity_video,activity_audio,activity_time,activity_place,
+        interested_num,shared_num,reported_num,activity_picture)
+        VALUES
+        (#{announcerId},#{activityName},#{activityIntro},#{activityLabel},
+        #{activityVideo},#{activityAudio},#{activityTime},#{activityPlace},
+        0,0,0,#{activityPicture})
+    </insert>
+
+    <!--选择指定用户发布的活动-->
+    <select id="selectMyOwnActivities" resultType="Activity" parameterType="ActivitySelector">
+        SELECT id,activity_name,activity_label,
+        activity_intro,activity_time,activity_place,activity_video,
+        activity_audio,activity_picture,interested_num,shared_num
+        FROM activity_info
+        WHERE announcer_id=#{id}
+        ORDER BY activity_time
+        LIMIT #{start},#{num}
+    </select>
+</mapper>

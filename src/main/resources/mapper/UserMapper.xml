@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utouch.dao.UserDao">
+
+    <!--登录-->
+    <select id="login" resultType="User" parameterType="User">
+        SELECT id FROM user_info WHERE username=#{username} AND password=#{password}
+    </select>
+
+    <!--检测用户是否已注册-->
+    <select id="isRegister" resultType="User" parameterType="String">
+        SELECT id FROM  user_info WHERE username=#{username}
+    </select>
+
+    <!--注册-->
+    <insert id="register" parameterType="User">
+        INSERT INTO user_info(username,password,nickname,sex,grade,major)
+        VALUES
+        (#{username},#{password},#{nickname},#{sex},#{grade},#{major})
+    </insert>
+
+    <!--重置密码-->
+    <update id="resetPwd" parameterType="User">
+        UPDATE user_info SET password=#{password} WHERE id=#{id}
+    </update>
+
+    <!--查询当前用户订阅的未过时（活动时间大于当前时间）的活动-->
+    <select id="selectSubscriptions" resultType="ActivityWithUserInfo" parameterType="ActivitySelector">
+        SELECT nickname,profile,avatar,
+        activity_info.id id,activity_info.announcer_id,activity_name,activity_label,activity_intro,activity_time,
+        activity_place,activity_video,activity_audio,activity_picture,interested_num,shared_num
+        FROM user_info,activity_info,subscription_info
+        WHERE activity_info.announcer_id=subscription_info.subscribed_id AND user_info.id=activity_info.announcer_id
+        AND subscription_info.user_id=#{id}
+        AND reported_num &lt;= 9
+        AND activity_time > (SELECT date_format(now(),'%Y-%m-%d %H:%I'))
+        ORDER BY activity_time
+        LIMIT #{start},#{num}
+    </select>
+
+    <!--查询用户信息-->
+    <select id="selectUserInfo" resultType="User" parameterType="Integer">
+        SELECT  id,nickname,sex,major,grade,activityNum,subscriptionNum,profile,avatar,background
+        FROM user_info
+        WHERE id=#{id}
+    </select>
+
+    <!--增加订阅数-->
+    <update id="addSubscriptionNum" parameterType="Integer">
+        UPDATE user_info SET subscription_num = subscription_num + 1 WHERE id=#{userId}
+    </update>
+    
+    <!--减少订阅数-->
+    <update id="subtractSubscriptionNum" parameterType="Integer">
+        UPDATE user_info SET subscription_num = subscription_num - 1 WHERE id=#{userId}
+    </update>
+
+    <!--增加活动数-->
+    <update id="addActivityNum" parameterType="Integer">
+        UPDATE user_info SET activity_num = activity_num + 1 WHERE id=#{userId}
+    </update>
+
+    <!--修改个人信息-->
+    <update id="updatePersonalInfo" parameterType="User">
+        UPDATE user_info
+        SET nickname=#{nickname}
+        AND sex=#{sex}
+        AND major=#{major}
+        AND grade=#{grade}
+        AND profile=#{profile}
+        AND avatar=#{avatar}
+        WHERE id=#{id}
+    </update>
+
+    <!--查询当前用户的订阅-->
+    <select id="showAllSubscriptions" resultType="User" parameterType="Integer">
+        SELECT subscribed_id id,avatar,nickname
+        FROM user_info,subscription_info
+        WHERE user_info.id=subscription_info.user_id
+        AND user_info.id=#{id}
+    </select>
+
+    <!--选择用户感兴趣的活动-->
+    <select id="selectInterestingActivities" resultType="ActivityWithUserInfo" parameterType="ActivitySelector">
+        SELECT nickname,profile,avatar,
+        activity_info.id id,activity_info.announcer_id,activity_name,activity_label,activity_intro,activity_time,
+        activity_place,activity_video,activity_audio,activity_picture,interested_num,shared_num
+        FROM user_info,activity_info,interest_info
+        WHERE user_info.id=interest_info.user_id
+        AND interest_info.activity_id=activity_info.id
+        AND interest_info.user_id=#{id}
+        AND reported_num &lt;= 9
+        AND activity_time > (SELECT date_format(now(),'%Y-%m-%d %H:%I'))
+        ORDER BY activity_time
+        LIMIT #{start},#{num}
+    </select>
+
+</mapper>

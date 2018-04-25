@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utouch.dao.InterestDao">
+    <!--添加记录-->
+    <insert id="insertInterest" parameterType="Interest">
+        INSERT INTO interest_info(user_id,activity_id) VALUES (#{userId},#{activityId})
+    </insert>
+
+    <!--删除记录-->
+    <delete id="deleteInterest" parameterType="Interest">
+        DELETE FROM interest_info WHERE user_id=#{userId} AND activity_id=#{activityId}
+    </delete>
+</mapper>
